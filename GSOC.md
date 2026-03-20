@@ -10,12 +10,38 @@ This guide helps prospective GSoC contributors understand the project's contribu
 |--------|-------|
 | **Total merged (accepted) PRs** | **456** |
 | **Highest PR number** | **#1159** |
-| **Top contributor (most merged PRs)** | **`alimanfoo` — 176 merged PRs** |
+| **Top contributor (most merged PRs, all-time)** | **`alimanfoo` — 176 merged PRs** |
+| **Top contributor since February 2026** | **`adilraza99` — 19 merged PRs** |
 
-### Top 10 contributors by merged pull requests
+> **Note:** Statistics are based on the upstream repository at
+> [malariagen/malariagen-data-python](https://github.com/malariagen/malariagen-data-python)
+> and were last updated in March 2026.
 
-| Rank | GitHub username | Merged PRs |
-|------|----------------|-----------|
+---
+
+### 🏆 Leaderboard — Merged PRs since February 2026
+
+Out of **102 total merged PRs** since 1 February 2026:
+
+| Rank | GitHub username | Merged PRs (Feb 2026 – present) |
+|------|----------------|--------------------------------|
+| 🥇 1 | [adilraza99](https://github.com/adilraza99) | **19** |
+| 🥈 2 | [blankirigaya](https://github.com/blankirigaya) | 11 |
+| 🥉 3 | [suhr25](https://github.com/suhr25) | 8 |
+| 4 | [khushthecoder](https://github.com/khushthecoder) | 7 |
+| 4 | [Sharon-codes](https://github.com/Sharon-codes) | 7 |
+| 4 | [31puneet](https://github.com/31puneet) | 7 |
+| 7 | [Tanisha127](https://github.com/Tanisha127) | 6 |
+| 8 | [jonbrenas](https://github.com/jonbrenas) | 5 |
+| 9 | [jwgarber](https://github.com/jwgarber) | 4 |
+| 9 | [rehanxt5](https://github.com/rehanxt5) | 4 |
+
+---
+
+### All-time Top 10 contributors by merged pull requests
+
+| Rank | GitHub username | Merged PRs (all-time) |
+|------|----------------|----------------------|
 | 1 | [alimanfoo](https://github.com/alimanfoo) | 176 |
 | 2 | [leehart](https://github.com/leehart) | 63 |
 | 3 | [jonbrenas](https://github.com/jonbrenas) | 36 |
@@ -26,10 +52,6 @@ This guide helps prospective GSoC contributors understand the project's contribu
 | 8 | [blankirigaya](https://github.com/blankirigaya) | 11 |
 | 9 | [suhr25](https://github.com/suhr25) | 8 |
 | 10 | [khushthecoder](https://github.com/khushthecoder) | 7 |
-
-> **Note:** Statistics are based on the upstream repository at
-> [malariagen/malariagen-data-python](https://github.com/malariagen/malariagen-data-python)
-> and were last updated in March 2026.
 
 ---
 
