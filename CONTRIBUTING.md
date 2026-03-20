@@ -234,7 +234,7 @@ poetry run pytest -v tests --typeguard-packages=malariagen_data,malariagen_data.
 ### Review process
 
 - PRs require approval from a project maintainer
-- CI tests must pass (pytest on Python 3.10 with NumPy 1.26.4)
+- CI tests must pass (pytest on Python 3.10, 3.11, and 3.12 with NumPy 2.0.2 and the latest release in the `>=2.0.2,<2.1` range)
 - Address review feedback by pushing new commits to your branch
 - Once approved, a maintainer will merge your PR
 
@@ -251,6 +251,10 @@ poetry run pytest -v tests --typeguard-packages=malariagen_data,malariagen_data.
 - Check for issues labeled [`help wanted`](https://github.com/malariagen/malariagen-data-python/labels/help%20wanted)
 - Improve documentation or add examples
 - Increase test coverage
+
+## Google Summer of Code (GSoC)
+
+If you are interested in contributing as part of Google Summer of Code, see the [GSoC guide](GSOC.md) for pull request statistics, top-contributor insights, and a step-by-step application guide.
 
 ## Questions?
 
