@@ -252,6 +252,10 @@ poetry run pytest -v tests --typeguard-packages=malariagen_data,malariagen_data.
 - Improve documentation or add examples
 - Increase test coverage
 
+## Google Summer of Code (GSoC)
+
+If you are interested in contributing as part of Google Summer of Code, see the [GSoC guide](GSOC.md) for pull request statistics, top-contributor insights, and a step-by-step application guide.
+
 ## Questions?
 
 If you're unsure about anything, feel free to:
