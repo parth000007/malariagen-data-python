@@ -5,9 +5,13 @@
 
 import numba
 import numpy as np
+from typing import Any, Dict, List, Optional, Tuple
 
 
-def _minimum_spanning_network(dist, max_dist=None):
+def _minimum_spanning_network(
+    dist: np.ndarray,
+    max_dist: Optional[int] = None,
+) -> Tuple[np.ndarray, np.ndarray]:
     # keep only the upper triangle of the distance matrix, to avoid adding the same
     # edge twice
     dist = np.triu(dist)
@@ -74,7 +78,7 @@ def _minimum_spanning_network(dist, max_dist=None):
     return edges, alternate_edges
 
 
-def _pairwise_haplotype_distance(h, metric="hamming"):
+def _pairwise_haplotype_distance(h: np.ndarray, metric: str = "hamming") -> np.ndarray:
     import scipy.spatial
 
     assert metric in ["hamming", "jaccard"]
@@ -86,7 +90,11 @@ def _pairwise_haplotype_distance(h, metric="hamming"):
     return dist
 
 
-def _mjn_remove_obsolete(h, orig_n_haplotypes, max_dist):
+def _mjn_remove_obsolete(
+    h: np.ndarray,
+    orig_n_haplotypes: int,
+    max_dist: Optional[int],
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     n_removed = None
     edges = alt_edges = None
 
@@ -111,7 +119,7 @@ def _mjn_remove_obsolete(h, orig_n_haplotypes, max_dist):
 
 
 @numba.njit
-def _uvw_consensus(h, max_allele):
+def _uvw_consensus(h: np.ndarray, max_allele: int) -> np.ndarray:
     # here we form the consensus of three haplotypes, by taking the most common
     # allele at each site
     m = h.shape[0]
@@ -128,7 +136,11 @@ def _uvw_consensus(h, max_allele):
     return out
 
 
-def _median_joining_network(h, max_dist=None, max_allele=1):
+def _median_joining_network(
+    h: np.ndarray,
+    max_dist: Optional[int] = None,
+    max_allele: int = 1,
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     # setup
     h = np.asarray(h)
     orig_n_haplotypes = h.shape[1]
@@ -173,17 +185,17 @@ def _median_joining_network(h, max_dist=None, max_allele=1):
 
 
 def _mjn_graph_nodes(
-    graph_nodes,
-    ht_distinct,
-    ht_distinct_mjn,
-    ht_counts,
-    ht_color_counts,
-    color,
-    color_values,
-    edges,
-    node_size_factor,
-    anon_width,
-):
+    graph_nodes: List[Dict[str, Any]],
+    ht_distinct: np.ndarray,
+    ht_distinct_mjn: np.ndarray,
+    ht_counts: np.ndarray,
+    ht_color_counts: Any,
+    color: Any,
+    color_values: Any,
+    edges: np.ndarray,
+    node_size_factor: float,
+    anon_width: float,
+) -> None:
     for i in range(ht_distinct_mjn.shape[1]):
         if i < ht_distinct.shape[1]:
             # original haplotype
@@ -222,11 +234,11 @@ def _mjn_graph_nodes(
 
 
 def _mjn_graph_edges(
-    graph_edges,
-    graph_nodes,
-    edges,
-    anon_width,
-):
+    graph_edges: List[Dict[str, Any]],
+    graph_nodes: List[Dict[str, Any]],
+    edges: np.ndarray,
+    anon_width: float,
+) -> None:
     for i in range(edges.shape[0]):
         for j in range(edges.shape[1]):
             # lookup distance between nodes i and j
@@ -290,17 +302,17 @@ def _mjn_graph_edges(
 
 
 def _mjn_graph(
-    ht_distinct,
-    ht_distinct_mjn,
-    ht_counts,
-    ht_color_counts,
-    color,
-    color_values,
-    edges,
-    alt_edges,
-    node_size_factor,
-    anon_width,
-):
+    ht_distinct: np.ndarray,
+    ht_distinct_mjn: np.ndarray,
+    ht_counts: np.ndarray,
+    ht_color_counts: Any,
+    color: Any,
+    color_values: Any,
+    edges: np.ndarray,
+    alt_edges: np.ndarray,
+    node_size_factor: float,
+    anon_width: float,
+) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
     graph_nodes = []
     graph_edges = []
     _mjn_graph_nodes(

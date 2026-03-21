@@ -10,7 +10,7 @@ from math import prod
 from functools import wraps
 from inspect import getcallargs
 from textwrap import dedent, fill
-from typing import IO, Dict, Hashable, List, Mapping, Optional, Tuple, Union, Callable
+from typing import Any, IO, Dict, Hashable, List, Mapping, Optional, Tuple, Union, Callable
 from urllib.parse import unquote_plus
 from numpy.testing import assert_allclose, assert_array_equal
 
@@ -43,7 +43,7 @@ DIM_SAMPLE = "samples"
 DIM_PLOIDY = "ploidy"
 
 
-def _gff3_parse_attributes(attributes_string):
+def _gff3_parse_attributes(attributes_string: str) -> Dict[str, Union[str, bool]]:
     """Parse a string of GFF3 attributes ('key=value' pairs delimited by ';')
     and return a dictionary."""
 
@@ -74,7 +74,7 @@ gff3_cols = (
 )
 
 
-def _read_gff3(buf, compression="gzip"):
+def _read_gff3(buf: IO, compression: str = "gzip") -> pd.DataFrame:
     # read as dataframe
     df = pd.read_csv(
         buf,
@@ -91,7 +91,7 @@ def _read_gff3(buf, compression="gzip"):
     return df
 
 
-def _unpack_gff3_attributes(df: pd.DataFrame, attributes: Tuple[str, ...]):
+def _unpack_gff3_attributes(df: pd.DataFrame, attributes: Tuple[str, ...]) -> pd.DataFrame:
     df = df.copy()
 
     # discover all attribute keys
@@ -121,10 +121,10 @@ class SafeStore(BaseStore):
     will not get automatically filled but will raise an exception. There
     should be no missing chunks in any of the datasets we host."""
 
-    def __init__(self, store):
+    def __init__(self, store: BaseStore) -> None:
         self._store = store
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: str) -> Any:
         try:
             return self._store[key]
         except KeyError as e:
@@ -132,23 +132,23 @@ class SafeStore(BaseStore):
             # rather than filling.
             raise FileNotFoundError(e)
 
-    def __getattr__(self, attr):
+    def __getattr__(self, attr: str) -> Any:
         if attr == "__setstate__":
             # Special method called during unpickling, don't pass through.
             raise AttributeError(attr)
         # Pass through all other attribute access to the wrapped store.
         return getattr(self._store, attr)
 
-    def __iter__(self):
+    def __iter__(self) -> Any:
         return iter(self._store)
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self._store)
 
-    def __setitem__(self, key, value):  # __setitem__ expects 2 params (Pylint)
+    def __setitem__(self, key: str, value: Any) -> None:  # __setitem__ expects 2 params (Pylint)
         raise NotImplementedError
 
-    def __delitem__(self, item):
+    def __delitem__(self, item: str) -> None:
         raise NotImplementedError
 
 
@@ -281,7 +281,7 @@ def _da_from_zarr(
     return d
 
 
-def _dask_compress_dataset(ds, indexer, dim):
+def _dask_compress_dataset(ds: xr.Dataset, indexer: Union[str, "da.Array", np.ndarray], dim: str) -> xr.Dataset:
     """Temporary workaround for memory issues when attempting to
     index a xarray dataset with a Boolean array.
 
@@ -331,7 +331,12 @@ def _dask_compress_dataset(ds, indexer, dim):
     return xr.Dataset(data_vars=data_vars, coords=coords, attrs=attrs)
 
 
-def _dask_compress_dataarray(a, indexer, indexer_computed, dim):
+def _dask_compress_dataarray(
+    a: xr.DataArray,
+    indexer: Union["da.Array", np.ndarray],
+    indexer_computed: np.ndarray,
+    dim: str,
+) -> Union["da.Array", np.ndarray]:
     try:
         # find the axis for the given dimension
         axis = a.dims.index(dim)
@@ -361,7 +366,7 @@ def _da_compress(
     data: da.Array,
     axis: int,
     indexer_computed: Optional[np.ndarray] = None,
-):
+) -> da.Array:
     """Wrapper for dask.array.compress() which computes chunk sizes faster."""
 
     # Sanity checks.
@@ -426,7 +431,7 @@ def _da_compress(
     return v
 
 
-def _init_filesystem(url, **kwargs):
+def _init_filesystem(url: str, **kwargs: Any) -> Tuple[Any, str]:
     """Initialise a fsspec filesystem from a given base URL and parameters."""
 
     storage_options = None  # To prevent using before assignment (Pylint).
@@ -520,7 +525,7 @@ def _init_filesystem(url, **kwargs):
     return fs, path
 
 
-def _init_zarr_store(fs, path):
+def _init_zarr_store(fs: Any, path: str) -> SafeStore:
     """Initialise a zarr store (mapping) from a fsspec filesystem."""
 
     return SafeStore(FSMap(fs=fs, root=path, check=False, create=False))
@@ -534,27 +539,27 @@ def _init_zarr_store(fs, path):
 class Region:
     """A region of a reference genome, i.e., a contig or contig interval."""
 
-    def __init__(self, contig, start=None, end=None):
+    def __init__(self, contig: str, start: Optional[int] = None, end: Optional[int] = None) -> None:
         self._contig = contig
         self._start = start
         self._end = end
 
     @property
-    def contig(self):
+    def contig(self) -> str:
         return self._contig
 
     @property
-    def start(self):
+    def start(self) -> Optional[int]:
         return self._start
 
     @property
-    def end(self):
+    def end(self) -> Optional[int]:
         return self._end
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash((self.contig, self.start, self.end))
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
         return (
             isinstance(other, Region)
             and (self.contig == other.contig)
@@ -562,7 +567,7 @@ class Region:
             and (self.end == other.end)
         )
 
-    def __str__(self):
+    def __str__(self) -> str:
         out = self._contig
         if self._start is not None or self._end is not None:
             out += ":"
@@ -573,7 +578,7 @@ class Region:
                 out += f"{self._end:,}"
         return out
 
-    def to_dict(self):
+    def to_dict(self) -> Dict[str, Optional[Union[str, int]]]:
         return dict(
             contig=self.contig,
             start=self.start,
@@ -581,7 +586,7 @@ class Region:
         )
 
 
-def _handle_region_coords(resource, region):
+def _handle_region_coords(resource: Any, region: str) -> Optional["Region"]:
     region_pattern_match = re.search("([a-zA-Z0-9_]+):(.+)-(.+)", region)
     if region_pattern_match:
         # parse region string that contains genomic coordinates
@@ -607,15 +612,15 @@ def _handle_region_coords(resource, region):
         return None
 
 
-def _prep_geneset_attributes_arg(attributes):
-    if type(attributes) not in [tuple, list] and attributes != "*":
+def _prep_geneset_attributes_arg(attributes: Any) -> Optional[Tuple[str, ...]]:
+    if not isinstance(attributes, (tuple, list)) and attributes != "*":
         raise TypeError("'attributes' must be a list, tuple, or '*'")
     if attributes is not None:
         attributes = tuple(attributes)
     return attributes
 
 
-def _handle_region_feature(resource, region):
+def _handle_region_feature(resource: Any, region: str) -> Optional["Region"]:
     if hasattr(resource, "genome_features"):
         gene_annotation = resource.genome_features(attributes=["ID"])
         results = gene_annotation.query(f"ID == '{region}'")
@@ -625,7 +630,7 @@ def _handle_region_feature(resource, region):
             return Region(feature.contig, int(feature.start), int(feature.end))
 
 
-def _valid_contigs(resource):
+def _valid_contigs(resource: Any) -> Tuple[str, ...]:
     """Determine which contig identifiers are valid for the given data resource."""
     valid_contigs = tuple(resource.contigs)
     # allow for optional virtual contigs
@@ -652,7 +657,7 @@ contig_param_type: TypeAlias = Union[
 ]
 
 
-def _parse_single_region(resource, region: single_region_param_type) -> Region:
+def _parse_single_region(resource: Any, region: single_region_param_type) -> Region:
     if isinstance(region, Region):
         # The region is already a Region, nothing to do.
         return region
@@ -687,7 +692,7 @@ def _parse_single_region(resource, region: single_region_param_type) -> Region:
 
 
 def _parse_multi_region(
-    resource,
+    resource: Any,
     region: region_param_type,
 ) -> List[Region]:
     if isinstance(region, (list, tuple)):
@@ -697,7 +702,7 @@ def _parse_multi_region(
 
 
 def _resolve_region(
-    resource,
+    resource: Any,
     region: region_param_type,
 ) -> Union[Region, List[Region]]:
     """Parse the provided region and return a `Region` object or list of
@@ -870,22 +875,22 @@ def _da_concat(arrays: List[da.Array], **kwargs) -> da.Array:
 
 
 def _value_error(
-    name,
-    value,
-    expectation,
-):
+    name: str,
+    value: Any,
+    expectation: str,
+) -> None:
     message = f"Bad value for parameter {name}; expected {expectation}, found {value!r}"
     raise ValueError(message)
 
 
-def _hash_params(params):
+def _hash_params(params: Dict[str, Any]) -> Tuple[str, str]:
     """Helper function to hash function parameters."""
     s = json.dumps(params, sort_keys=True, indent=4)
     h = hashlib.md5(s.encode()).hexdigest()
     return h, s
 
 
-def _jitter(a, fraction):
+def _jitter(a: np.ndarray, fraction: float) -> np.ndarray:
     """Jitter data in `a` using the fraction `f`."""
     r = a.max() - a.min()
     return a + fraction * np.random.uniform(-r, r, a.shape)
@@ -898,7 +903,7 @@ class CacheMiss(Exception):
 class LoggingHelper:
     def __init__(
         self, *, name: str, out: Optional[Union[str, IO]], debug: bool = False
-    ):
+    ) -> None:
         # set up a logger
         logger = logging.getLogger(name)
         if debug:
@@ -932,11 +937,11 @@ class LoggingHelper:
             handler.setFormatter(formatter)
             logger.addHandler(handler)
 
-    def flush(self):
+    def flush(self) -> None:
         if self._handler is not None:
             self._handler.flush()
 
-    def debug(self, msg):
+    def debug(self, msg: str) -> None:
         # get the name of the calling function, helps with debugging
         caller_name = sys._getframe().f_back.f_code.co_name
         msg = f"{caller_name}: {msg}"
@@ -945,19 +950,23 @@ class LoggingHelper:
         # flush messages immediately
         self.flush()
 
-    def info(self, msg):
+    def info(self, msg: str) -> None:
         self._logger.info(msg)
 
         # flush messages immediately
         self.flush()
 
-    def set_level(self, level):
+    def set_level(self, level: int) -> None:
         self._logger.setLevel(level)
         if self._handler is not None:
             self._handler.setLevel(level)
 
 
-def _jackknife_ci(stat_data, jack_stat, confidence_level):
+def _jackknife_ci(
+    stat_data: float,
+    jack_stat: np.ndarray,
+    confidence_level: float,
+) -> Tuple[float, float, float, float, float, float]:
     """Compute a confidence interval from jackknife resampling.
 
     Parameters
@@ -1017,10 +1026,10 @@ def _jackknife_ci(stat_data, jack_stat, confidence_level):
 
 
 def _plotly_discrete_legend(
-    color,
-    color_values,
-    **kwargs,
-):
+    color: str,
+    color_values: List[Any],
+    **kwargs: Any,
+) -> Any:
     """Manually create a legend by making a scatter plot then
     hiding everything but the legend.
 
@@ -1089,7 +1098,7 @@ def _plotly_discrete_legend(
     return fig
 
 
-def _get_gcp_region(details):
+def _get_gcp_region(details: Any) -> Optional[str]:
     """Attempt to determine the current GCP region based on
     response from ipinfo."""
 
@@ -1131,7 +1140,7 @@ class ColabLocationError(RuntimeError):
     pass
 
 
-def _check_colab_location(gcp_region: Optional[str]):
+def _check_colab_location(gcp_region: Optional[str]) -> None:
     """
     Sometimes, colab will allocate a VM outside the US, e.g., in
     Europe or Asia. Because the MalariaGEN GCS buckets are located
@@ -1155,7 +1164,7 @@ def _check_colab_location(gcp_region: Optional[str]):
             )
 
 
-def _check_types(f):
+def _check_types(f: Callable[..., Any]) -> Callable[..., Any]:
     """Simple decorator to provide runtime checking of parameter types.
 
     N.B., the typeguard package does have a decorator function called
@@ -1168,7 +1177,7 @@ def _check_types(f):
     """
 
     @wraps(f)
-    def check_types_wrapper(*args, **kwargs):
+    def check_types_wrapper(*args: Any, **kwargs: Any) -> Any:
         type_hints = get_type_hints(f)
         call_args = getcallargs(f, *args, **kwargs)
         for k, t in type_hints.items():
@@ -1196,7 +1205,7 @@ def _check_types(f):
 
 
 @numba.njit
-def _true_runs(a):
+def _true_runs(a: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
     in_run = False
     starts = []
     stops = []
@@ -1214,7 +1223,7 @@ def _true_runs(a):
 
 
 @numba.njit(parallel=True)
-def _pdist_abs_hamming(X):
+def _pdist_abs_hamming(X: np.ndarray) -> np.ndarray:
     n_obs = X.shape[0]
     n_ftr = X.shape[1]
     out = np.zeros((n_obs, n_obs), dtype=np.int32)
@@ -1232,7 +1241,7 @@ def _pdist_abs_hamming(X):
 
 
 @numba.njit
-def _square_to_condensed(i, j, n):
+def _square_to_condensed(i: int, j: int, n: int) -> int:
     """Convert distance matrix coordinates from square form (i, j) to condensed form."""
 
     assert i != j, "no diagonal elements in condensed matrix"
@@ -1242,7 +1251,7 @@ def _square_to_condensed(i, j, n):
 
 
 @numba.njit(parallel=True)
-def _multiallelic_diplotype_pdist(X, metric):
+def _multiallelic_diplotype_pdist(X: np.ndarray, metric: Callable[..., Any]) -> np.ndarray:
     """Optimised implementation of pairwise distance between diplotypes.
 
     N.B., here we assume the array X provides diplotypes as genotype allele
@@ -1277,7 +1286,7 @@ def _multiallelic_diplotype_pdist(X, metric):
 
 
 @numba.njit
-def _multiallelic_diplotype_mean_cityblock(x, y):
+def _multiallelic_diplotype_mean_cityblock(x: np.ndarray, y: np.ndarray) -> float:
     """Compute the mean cityblock distance between two diplotypes x and y. The
     diplotype vectors are expected as genotype allele counts, i.e., x and y
     should have the same shape (n_sites, n_alleles).
@@ -1327,7 +1336,7 @@ def _multiallelic_diplotype_mean_cityblock(x, y):
 
 
 @numba.njit
-def _multiallelic_diplotype_sqeuclidean(x, y):
+def _multiallelic_diplotype_sqeuclidean(x: np.ndarray, y: np.ndarray) -> Tuple[float, float]:
     n_sites = x.shape[0]
     n_alleles = x.shape[1]
     distance = np.float32(0)
@@ -1362,7 +1371,7 @@ def _multiallelic_diplotype_sqeuclidean(x, y):
 
 
 @numba.njit
-def _multiallelic_diplotype_mean_sqeuclidean(x, y):
+def _multiallelic_diplotype_mean_sqeuclidean(x: np.ndarray, y: np.ndarray) -> float:
     """Compute the mean squared euclidean distance between two diplotypes x and
     y. The diplotype vectors are expected as genotype allele counts, i.e., x and
     y should have the same shape (n_sites, n_alleles).
@@ -1385,7 +1394,7 @@ def _multiallelic_diplotype_mean_sqeuclidean(x, y):
 
 
 @numba.njit
-def _multiallelic_diplotype_mean_euclidean(x, y):
+def _multiallelic_diplotype_mean_euclidean(x: np.ndarray, y: np.ndarray) -> float:
     """Compute the mean euclidean distance between two diplotypes x and
     y. The diplotype vectors are expected as genotype allele counts, i.e., x and
     y should have the same shape (n_sites, n_alleles).
@@ -1409,7 +1418,7 @@ def _multiallelic_diplotype_mean_euclidean(x, y):
 
 
 @numba.njit
-def _trim_alleles(ac):
+def _trim_alleles(ac: np.ndarray) -> np.ndarray:
     """Remap allele indices to trim out unobserved alleles.
 
     The idea here is that our SNP data includes alleles which
@@ -1464,7 +1473,7 @@ def _trim_alleles(ac):
 
 
 @numba.njit
-def _apply_allele_mapping(x, mapping, max_allele):
+def _apply_allele_mapping(x: np.ndarray, mapping: np.ndarray, max_allele: int) -> np.ndarray:
     """Transform an array x, where the columns correspond to alleles,
     according to an allele mapping.
 
@@ -1494,7 +1503,7 @@ def _apply_allele_mapping(x, mapping, max_allele):
     return out
 
 
-def _dask_apply_allele_mapping(v, mapping, max_allele):
+def _dask_apply_allele_mapping(v: da.Array, mapping: np.ndarray, max_allele: int) -> da.Array:
     assert isinstance(v, da.Array)
     assert isinstance(mapping, np.ndarray)
     assert v.ndim == 2
@@ -1512,7 +1521,7 @@ def _dask_apply_allele_mapping(v, mapping, max_allele):
     return out
 
 
-def _genotype_array_map_alleles(gt, mapping):
+def _genotype_array_map_alleles(gt: np.ndarray, mapping: np.ndarray) -> np.ndarray:
     # Transform genotype calls via an allele mapping.
     # N.B., scikit-allel does not handle empty blocks well, so we
     # include some extra logic to handle that better.
@@ -1535,7 +1544,7 @@ def _genotype_array_map_alleles(gt, mapping):
     return out
 
 
-def _dask_genotype_array_map_alleles(gt, mapping):
+def _dask_genotype_array_map_alleles(gt: da.Array, mapping: np.ndarray) -> da.Array:
     assert isinstance(gt, da.Array)
     assert isinstance(mapping, np.ndarray)
     assert gt.ndim == 3
@@ -1552,7 +1561,7 @@ def _dask_genotype_array_map_alleles(gt, mapping):
     return gt_out
 
 
-def _pandas_apply(f, df, columns):
+def _pandas_apply(f: Callable[..., Any], df: pd.DataFrame, columns: List[str]) -> pd.Series:
     """Optimised alternative to pandas apply."""
     df = df.reset_index(drop=True)
     iterator = zip(*[df[c].values for c in columns])
@@ -1560,7 +1569,7 @@ def _pandas_apply(f, df, columns):
     return ret
 
 
-def _compare_series_like(actual, expect):
+def _compare_series_like(actual: pd.Series, expect: pd.Series) -> None:
     """Compare pandas series-like objects for equality or floating point
     similarity, handling missing values appropriately."""
 
@@ -1577,7 +1586,7 @@ def _compare_series_like(actual, expect):
 
 
 @numba.njit
-def _hash_columns(x):
+def _hash_columns(x: np.ndarray) -> np.ndarray:
     # Here we want to compute a hash for each column in the
     # input array. However, we assume the input array is in
     # C contiguous order, and therefore we scan the array
@@ -1598,7 +1607,9 @@ def _hash_columns(x):
     return out
 
 
-def _haplotype_frequencies(h):
+def _haplotype_frequencies(
+    h: np.ndarray,
+) -> Tuple[Dict[int, float], Dict[int, int], Dict[int, int]]:
     """Compute haplotype frequencies, returning a dictionary that maps
     haplotype hash values to frequencies."""
     n = h.shape[1]
@@ -1610,7 +1621,7 @@ def _haplotype_frequencies(h):
     return freqs, counts, nobs
 
 
-def _distributed_client():
+def _distributed_client() -> Any:
     from distributed import get_client
 
     try:
