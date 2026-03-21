@@ -22,6 +22,8 @@ sudo add-apt-repository ppa:deadsnakes/ppa
 sudo apt install python3.12 python3.12-venv
 ```
 
+> **Alternative for Ubuntu**: If you'd rather not use a PPA, you can also use [pyenv](https://github.com/pyenv/pyenv) (see the Debian instructions below) — it works equally well on Ubuntu.
+
 **Debian or other Linux distributions** — the Deadsnakes PPA is Ubuntu-only and won't work here.
 Use [pyenv](https://github.com/pyenv/pyenv) instead, which compiles Python from source and works on any distro:
 

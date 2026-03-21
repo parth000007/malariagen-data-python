@@ -46,7 +46,7 @@ Both can be installed via your distribution's package manager or [Homebrew](http
 
 4. **Install Python 3.12**
 
-   Python 3.12 is the recommended version — it's what CI uses and what the team develops against:
+   Python 3.12 is the recommended version — it's the primary version the team develops against, and CI tests on Python 3.10, 3.11, and 3.12:
 
    ```bash
    poetry python install 3.12
@@ -244,7 +244,7 @@ Run through this checklist to make sure your PR is ready for review:
 Once your PR is open, a project maintainer will review it. Here's what to expect:
 
 - PRs require approval from a project maintainer before merging
-- CI tests must pass (pytest on Python 3.10, 3.11, and 3.12, with NumPy versions `==2.0.2` and `>=2.0.2,<2.1`)
+- CI tests must pass — pytest runs on Python **3.10**, **3.11**, and **3.12**, each with NumPy `==2.0.2` (locked baseline) and `>=2.0.2,<2.1` (latest in the declared range)
 - Address review feedback by pushing new commits to your branch — no need to open a new PR
 - Once approved, a maintainer will merge your PR
 
